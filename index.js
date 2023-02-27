@@ -8,7 +8,7 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const ENVIRONMENT = "staged"
+const ENVIRONMENT = "prod"
 
 if (ENVIRONMENT === "local") {
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0
@@ -39,6 +39,7 @@ async function processInput(input) {
       const fileName = args[0];
       console.log(`Downloading [${fileName}] from all clients...`.yellow);
       await Promise.all(clients.map(client => client.downloadFile(fileName)));
+      console.log(`Download completed on all clients!`.green);
       break;
     }
     case 'exit':

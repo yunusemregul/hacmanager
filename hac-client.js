@@ -7,6 +7,7 @@ const { CookieJar } = require("tough-cookie");
 const globalcfg = require('./config.json');
 const fs = require('fs');
 const AdmZip = require('adm-zip');
+const path = require("path");
 
 const parser = new DomParser();
 
@@ -136,7 +137,11 @@ class HACClient {
             url: this.downloadUrl,
             responseType: 'stream'
         });
-        const outputName = `${this.name}-${fileName}.zip`;
+        const outputName = `./downloads/${this.name}-${fileName}.zip`;
+        if (fs.existsSync(outputName)) {
+            this.log(`File [${outputName}] exists so deleting it...`.yellow);
+            fs.unlinkSync(outputName);
+        }
         const writeStream = fs.createWriteStream(outputName);
         await fileStream.data.pipe(writeStream);
         await new Promise((resolve, reject) => {
@@ -146,9 +151,34 @@ class HACClient {
         this.log(`Download of [${outputName}] completed!`.green);
         const zip = new AdmZip(outputName);
         this.log(`Extracting [${outputName}]...`.green);
-        zip.extractAllTo(`${this.name}_${fileName}`, true);
+        const extractPath = `./downloads/${this.name}_${fileName}`;
+        if (fs.existsSync(extractPath)) {
+            this.log(`Extract path directory [${extractPath}] exists so deleting it...`.yellow);
+            fs.rmSync(extractPath, { recursive: true });
+        }
+        await zip.extractAllTo(extractPath, true);
         this.log(`Extract of [${outputName}] completed, deleting the zip...`.green);
-        //await fs.unlink(outputName);
+        fs.unlinkSync(outputName);
+
+        const tomcatPath = `${extractPath}/logs/tomcat`;
+        if (fs.existsSync(tomcatPath)) {
+            this.log(`Tomcat log directory found, moving all logs out..`.yellow);
+
+            const files = fs.readdirSync(tomcatPath);
+            files.forEach(async (file) => {
+                const ext = path.extname(file);
+                const sourcePath = path.join(tomcatPath, file);
+                const targetPath = path.join("./downloads", `${this.name}_${fileName}${ext}`);
+                if (fs.existsSync(targetPath)) {
+                    this.log(`Log file [${targetPath}] already exists, removing it!`.yellow);
+                    fs.rmSync(targetPath);
+                }
+                fs.renameSync(sourcePath, targetPath);
+                fs.rmSync(extractPath, {recursive: true});
+                this.log(`Log file moved out, directory deleted!`.green);
+            });
+        }
+
         this.log(`All operations completed for [${outputName}]!`.green);
     }
 }
