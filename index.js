@@ -8,7 +8,7 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-const ENVIRONMENT = "prod"
+const ENVIRONMENT = config.environment;
 
 if (ENVIRONMENT === "local") {
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0

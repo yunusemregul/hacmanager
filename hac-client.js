@@ -164,11 +164,18 @@ class HACClient {
         if (fs.existsSync(tomcatPath)) {
             this.log(`Tomcat log directory found, moving all logs out..`.yellow);
 
+            const folderName = fileName.replace("-","_").replace(".","_");
+            const folderPath = path.join("./downloads", folderName);
+
+            if (!fs.existsSync(folderPath)) {
+                fs.mkdirSync(folderPath);
+            }
+
             const files = fs.readdirSync(tomcatPath);
             files.forEach(async (file) => {
                 const ext = path.extname(file);
                 const sourcePath = path.join(tomcatPath, file);
-                const targetPath = path.join("./downloads", `${this.name}_${fileName}${ext}`);
+                const targetPath = path.join(folderPath, `${this.name}_${fileName}${ext}`);
                 if (fs.existsSync(targetPath)) {
                     this.log(`Log file [${targetPath}] already exists, removing it!`.yellow);
                     fs.rmSync(targetPath);
