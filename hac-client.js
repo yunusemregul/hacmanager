@@ -22,6 +22,8 @@ class HACClient {
             jar
         }));
 
+
+        // TODO: this looks messy
         this.name = config.name;
         this.baseUrl = config.baseUrl;
         this.csrfBeforeLoginUrl = this.baseUrl + globalcfg.constants.csrfbeforelogin;
@@ -109,6 +111,7 @@ class HACClient {
         return foundFiles;
     }
 
+    // TODO: separate this method into pieces
     async downloadFile(fileName) {
         const files = this.searchFile(fileName);
         const filesString = files.map(file => file.absolute).join('|');

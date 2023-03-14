@@ -3,6 +3,8 @@ const HACClient = require('./hac-client');
 const readline = require('readline');
 const colors = require('colors');
 
+// TODO: turn this into a npm global module which could be used anywhere in CLI
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -24,6 +26,7 @@ for (const clientConfig of config.environments[ENVIRONMENT]) {
 async function processInput(input) {
   const [command, ...args] = input.trim().split(' ');
 
+  // TODO: manage this from something like "command manager"
   switch (command) {
     case 'find': {
       const fileName = args[0];
