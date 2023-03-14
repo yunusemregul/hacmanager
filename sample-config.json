@@ -1,0 +1,67 @@
+{
+    "environment": "prod",
+    "constants": {
+        "csrfbeforelogin": "/hac/login.jsp",
+        "csrfafterlogin": "/hac",
+        "login": "/hac/j_spring_security_check",
+        "data": "/hac/platform/support/data",
+        "zip": "/hac/platform/support/zip",
+        "download": "/hac/platform/support/zip/download"
+    },
+    "environments": {
+        "staged": [
+            {
+                "name": "staged0",
+                "baseUrl": "https://staged0.example.com",
+                "credentials": {
+                    "username": "admin",
+                    "password": "nimda"
+                }
+            },
+            {
+                "name": "staged01",
+                "baseUrl": "https://staged01.example.com",
+                "credentials": {
+                    "username": "admin",
+                    "password": "nimda"
+                }
+            }
+        ],
+        "prod": [
+            {
+                "name": "prod0",
+                "baseUrl": "https://prod0.example.com",
+                "credentials": {
+                    "username": "admin",
+                    "password": "nimda"
+                }
+            },
+            {
+                "name": "prod1",
+                "baseUrl": "https://prod1.example.com",
+                "credentials": {
+                    "username": "admin",
+                    "password": "nimda"
+                }
+            },
+            {
+                "name": "prod2",
+                "baseUrl": "https://prod2.example.com",
+                "credentials": {
+                    "username": "admin",
+                    "password": "nimda"
+                }
+            }
+        ],
+        "local": [
+            {
+                "name": "local",
+                "baseUrl": "https://127.0.0.1:9002",
+                "credentials": {
+                    "username": "admin",
+                    "password": "nimda"
+                }
+            }
+        ]
+    }
+}
