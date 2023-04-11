@@ -8,6 +8,7 @@ const globalcfg = require('./config.json');
 const fs = require('fs');
 const AdmZip = require('adm-zip');
 const path = require("path");
+const ProgressBar = require('progress');
 
 const parser = new DomParser();
 
@@ -146,12 +147,25 @@ class HACClient {
             fs.unlinkSync(outputName);
         }
         const writeStream = fs.createWriteStream(outputName);
-        await fileStream.data.pipe(writeStream);
-        await new Promise((resolve, reject) => {
-            writeStream.on('finish', resolve);
-            writeStream.on('error', reject);
+        const progressBar = new ProgressBar(`[${this.name}]`.underline.blue + ` [:bar] :percent :etas`.white, {
+            complete: '=',
+            incomplete: ' ',
+            width: 20,
+            total: size*1024
         });
-        this.log(`Download of [${outputName}] completed!`.green);
+      
+        fileStream.data.on('data', (chunk) => {
+          progressBar.tick(chunk.length);
+        });
+      
+        await new Promise((resolve, reject) => {
+          fileStream.data.pipe(writeStream);
+          writeStream.on('finish', resolve);
+          writeStream.on('error', reject);
+        });
+      
+        progressBar.terminate();
+        this.log(`Download of [${outputName}] completed!`.green);      
         const zip = new AdmZip(outputName);
         this.log(`Extracting [${outputName}]...`.green);
         const extractPath = `./downloads/${this.name}_${fileName}`;
@@ -164,7 +178,7 @@ class HACClient {
         fs.unlinkSync(outputName);
 
         const tomcatPath = `${extractPath}/logs/tomcat`;
-        if (fs.existsSync(tomcatPath)) {
+        if (files.length==1 && fs.existsSync(tomcatPath)) {
             this.log(`Tomcat log directory found, moving all logs out..`.yellow);
 
             const folderName = fileName.replace("-","_").replace(".","_");
@@ -176,9 +190,11 @@ class HACClient {
 
             const files = fs.readdirSync(tomcatPath);
             files.forEach(async (file) => {
-                const ext = path.extname(file);
+                const parsedPath = path.parse(file);
+                const name = parsedPath.name;
+                const ext = parsedPath.ext;
                 const sourcePath = path.join(tomcatPath, file);
-                const targetPath = path.join(folderPath, `${this.name}_${fileName}${ext}`);
+                const targetPath = path.join(folderPath, `${this.name}_${fileName}_${name}${ext}`);
                 if (fs.existsSync(targetPath)) {
                     this.log(`Log file [${targetPath}] already exists, removing it!`.yellow);
                     fs.rmSync(targetPath);

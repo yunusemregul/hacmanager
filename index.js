@@ -41,7 +41,9 @@ async function processInput(input) {
     case 'download': {
       const fileName = args[0];
       console.log(`Downloading [${fileName}] from all clients...`.yellow);
-      await Promise.all(clients.map(client => client.downloadFile(fileName)));
+      for (let client of clients) {
+        await client.downloadFile(fileName);
+      }
       console.log(`Download completed on all clients!`.green);
       break;
     }
@@ -61,9 +63,11 @@ function getInput() {
 }
 
 async function main() {
+  console.log("Getting files...".yellow);
+
   await Promise.all(clients.map((client) => client.getFiles()));
 
-  console.log("You can type help for all commands.".yellow);
+  console.log("You can type help for all commands.".green);
 
   while (true) {
     const input = await getInput();
