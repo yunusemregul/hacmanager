@@ -112,22 +112,17 @@ class HACClient {
         return foundFiles;
     }
 
-    // TODO: separate this method into pieces
+    // todo: test if this works properly with multiple files
     async downloadFile(fileName) {
         const files = this.searchFile(fileName);
         const filesString = files.map(file => file.absolute).join('|');
-        let zipResponse = null;
-        try {
-            zipResponse = await this.instance({
-                method: "POST",
-                url: this.zipUrl,
-                data: qs.stringify({
-                    files: filesString
-                })
-            });
-        } catch (e) {
-            console.error(e);
+        
+        if (files.length == 0) {
+            this.log(`No files found!`.red);
+            return;
         }
+
+        let zipResponse = await this.zipOnHAC(filesString);
 
         if (zipResponse == null || zipResponse.status !== 200) {
             this.log(`Error zipping ${files.map((file, index) => index % 2 == 0 ? file.name.white : file.name.gray)}!`.red)
@@ -173,6 +168,23 @@ class HACClient {
         this.extractFromTomcatPath(extractPath, files, fileName);
 
         this.log(`All operations completed for [${outputName}]!`.green);
+    }
+
+    async zipOnHAC(filesString) {
+        this.log(`Zipping files...`.yellow);
+        let zipResponse = null;
+        try {
+            zipResponse = await this.instance({
+                method: "POST",
+                url: this.zipUrl,
+                data: qs.stringify({
+                    files: filesString
+                })
+            });
+        } catch (e) {
+            console.error(e);
+        }
+        return zipResponse;
     }
 
     unzip(outputName, fileName) {
