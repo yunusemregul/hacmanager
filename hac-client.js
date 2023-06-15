@@ -127,12 +127,13 @@ class HACClient {
             });
         } catch (e) {
             console.error(e);
-        } finally {
-            if (zipResponse == null || zipResponse.status !== 200) {
-                this.log(`Error zipping ${files.map((file, index) => index % 2 == 0 ? file.name.white : file.name.gray)}!`.red)
-                return;
-            }
         }
+
+        if (zipResponse == null || zipResponse.status !== 200) {
+            this.log(`Error zipping ${files.map((file, index) => index % 2 == 0 ? file.name.white : file.name.gray)}!`.red)
+            return;
+        }
+
         const size = zipResponse.data.size;
         this.log(`Zipped size is [${size}] of files: ${files.map((file, index) => index % 2 == 0 ? file.name.white : file.name.gray)}`.green);
         this.log(`Starting download...`.yellow);
@@ -167,20 +168,31 @@ class HACClient {
         progressBar.terminate();
         this.log(`Download of [${outputName}] completed!`.green);  
 
-        this.log(`Extracting [${outputName}]...`.green);
+        const extractPath = this.unzip(outputName, fileName);
+
+        this.extractFromTomcatPath(extractPath, files, fileName);
+
+        this.log(`All operations completed for [${outputName}]!`.green);
+    }
+
+    unzip(outputName, fileName) {
+        this.log(`Unzipping [${outputName}]...`.green);
         const extractPath = `./downloads/${this.name}_${fileName}`;
         if (fs.existsSync(extractPath)) {
             this.log(`Extract path directory [${extractPath}] exists so deleting it...`.yellow);
             fs.rmSync(extractPath, { recursive: true });
-        } 
+        }
         execSync(`unzip -o ${outputName} -d ${extractPath}`);
         fs.unlinkSync(outputName);
+        return extractPath;
+    }
 
+    extractFromTomcatPath(extractPath, files, fileName) {
         const tomcatPath = `${extractPath}/logs/tomcat`;
-        if (files.length==1 && fs.existsSync(tomcatPath)) {
+        if (files.length == 1 && fs.existsSync(tomcatPath)) {
             this.log(`Tomcat log directory found, moving all logs out..`.yellow);
 
-            const folderName = fileName.replace("-","_").replace(".","_");
+            const folderName = fileName.replace("-", "_").replace(".", "_");
             const folderPath = path.join("./downloads", folderName);
 
             if (!fs.existsSync(folderPath)) {
@@ -199,12 +211,10 @@ class HACClient {
                     fs.rmSync(targetPath);
                 }
                 fs.renameSync(sourcePath, targetPath);
-                fs.rmSync(extractPath, {recursive: true});
+                fs.rmSync(extractPath, { recursive: true });
                 this.log(`Log file moved out, directory deleted!`.green);
             });
         }
-
-        this.log(`All operations completed for [${outputName}]!`.green);
     }
 }
 
