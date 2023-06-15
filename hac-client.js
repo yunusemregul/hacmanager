@@ -6,9 +6,9 @@ const { wrapper } = require("axios-cookiejar-support");
 const { CookieJar } = require("tough-cookie");
 const globalcfg = require('./config.json');
 const fs = require('fs');
-const AdmZip = require('adm-zip');
 const path = require("path");
 const ProgressBar = require('progress');
+const { execSync } = require('child_process');
 
 const parser = new DomParser();
 
@@ -165,16 +165,15 @@ class HACClient {
         });
       
         progressBar.terminate();
-        this.log(`Download of [${outputName}] completed!`.green);      
-        const zip = new AdmZip(outputName);
+        this.log(`Download of [${outputName}] completed!`.green);  
+
         this.log(`Extracting [${outputName}]...`.green);
         const extractPath = `./downloads/${this.name}_${fileName}`;
         if (fs.existsSync(extractPath)) {
             this.log(`Extract path directory [${extractPath}] exists so deleting it...`.yellow);
             fs.rmSync(extractPath, { recursive: true });
-        }
-        await zip.extractAllTo(extractPath, true);
-        this.log(`Extract of [${outputName}] completed, deleting the zip...`.green);
+        } 
+        execSync(`unzip -o ${outputName} -d ${extractPath}`);
         fs.unlinkSync(outputName);
 
         const tomcatPath = `${extractPath}/logs/tomcat`;
