@@ -104,7 +104,7 @@ class HACClient {
     searchFile(fileName) {
         const foundFiles = [];
         for (const file of this.files) {
-            if (file.name.includes(fileName)) {
+            if (file.name.match(fileName)) {
                 foundFiles.push(file);
             }
         }
