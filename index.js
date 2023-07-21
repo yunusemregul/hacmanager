@@ -41,11 +41,17 @@ async function processInput(input) {
       break;
     }
     case 'download': {
-      const fileName = args[0];
-      console.log(`Downloading [${fileName}] from all clients...`.yellow);
-      for (let client of clients) {
-        if (client.isLoggedIn) {
-          await client.downloadFile(fileName);
+      const filesArg = args[0];
+      const files = filesArg.split(",");
+      if (files.length>1) {
+        console.log(`Queueing the download of ${files.length} files..`.yellow);
+      }
+      for (const fileName of files) {
+        console.log(`Downloading [${fileName}] from all clients...`.yellow);
+        for (let client of clients) {
+          if (client.isLoggedIn) {
+            await client.downloadFile(fileName);
+          }
         }
       }
       console.log(`Download completed on all clients!`.green);
