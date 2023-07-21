@@ -33,7 +33,9 @@ async function processInput(input) {
       console.log(`Searching [${fileName}] through clients...`.yellow);
 
       for (const client of clients) {
-        const files = client.searchFile(fileName);
+        if (client.isLoggedIn) {
+          const files = client.searchFile(fileName);
+        }
       }
 
       break;
@@ -42,7 +44,9 @@ async function processInput(input) {
       const fileName = args[0];
       console.log(`Downloading [${fileName}] from all clients...`.yellow);
       for (let client of clients) {
-        await client.downloadFile(fileName);
+        if (client.isLoggedIn) {
+          await client.downloadFile(fileName);
+        }
       }
       console.log(`Download completed on all clients!`.green);
       break;

@@ -51,7 +51,8 @@ class HACClient {
         this.log(`Getting CSRF token..`.yellow);
         const csrfResponse = await this.instance({
             method: "GET",
-            url: url
+            url: url,
+            timeout: 3000
         });
         const dom = parser.parseFromString(csrfResponse.data);
         this.csrfToken = dom.getElementsByName("_csrf")[0].getAttribute("content");
@@ -61,7 +62,12 @@ class HACClient {
     }
 
     async logIn() {
-        await this.getCsrf(this.csrfBeforeLoginUrl);
+        try {
+            await this.getCsrf(this.csrfBeforeLoginUrl);
+        } catch (error) {
+            this.log(`Error getting CSRF token, client ${this.name} wont work!`.red)
+            return false;
+        }
         this.log(`Logging in..`.yellow);
         const loginResponse = await this.instance({
             method: "POST",
@@ -87,18 +93,20 @@ class HACClient {
             await this.logIn();
         }
 
-        this.log(`Getting file list...`.yellow);
-        const fileListResponse = await this.instance({
-            method: "GET",
-            url: this.dataUrl
-        });
-        if (fileListResponse.status != 200) {
-            this.log(`Could not get file list!`.red);
-            return false;
+        if (this.isLoggedIn) {
+            this.log(`Getting file list...`.yellow);
+            const fileListResponse = await this.instance({
+                method: "GET",
+                url: this.dataUrl
+            });
+            if (fileListResponse.status != 200) {
+                this.log(`Could not get file list!`.red);
+                return false;
+            }
+            this.files = fileListResponse.data.filter(file => file.size > 0);
+            this.log(`Got file list with size [${this.files.length}]!`.green);
+            return true;
         }
-        this.files = fileListResponse.data.filter(file => file.size > 0);
-        this.log(`Got file list with size [${this.files.length}]!`.green);
-        return true;
     }
 
     searchFile(fileName) {
@@ -114,14 +122,25 @@ class HACClient {
 
     // todo: test if this works properly with multiple files
     async downloadFile(fileName) {
-        const files = this.searchFile(fileName);
-        const filesString = files.map(file => file.absolute).join('|');
-        
+        let files = this.searchFile(fileName);
+
+        const downloadPath = this.getDownloadPath(fileName);
+        if (fs.existsSync(downloadPath)) {
+            const downloadedLogs = fs.readdirSync(downloadPath)
+            for (const log of downloadedLogs) {
+                if (log.startsWith(this.name)) {
+                    this.log(`Log file is downloaded before, skipping the download: ${path.join(downloadPath, log)}`.yellow)
+                    return;
+                }
+            }
+        }
+
         if (files.length == 0) {
             this.log(`No files found!`.red);
             return;
         }
 
+        const filesString = files.map(file => file.absolute).join('|');
         let zipResponse = await this.zipOnHAC(filesString);
 
         if (zipResponse == null || zipResponse.status !== 200) {
@@ -204,8 +223,7 @@ class HACClient {
         if (files.length == 1 && fs.existsSync(tomcatPath)) {
             this.log(`Tomcat log directory found, moving all logs out..`.yellow);
 
-            const folderName = fileName.replace("-", "_").replace(".", "_");
-            const folderPath = path.join("./downloads", folderName);
+            const folderPath = this.getDownloadPath(fileName);
 
             if (!fs.existsSync(folderPath)) {
                 fs.mkdirSync(folderPath);
@@ -227,6 +245,11 @@ class HACClient {
                 this.log(`Log file moved out, directory deleted!`.green);
             });
         }
+    }
+
+    getDownloadPath(fileName) {
+        const folderName = fileName.replace("-", "_").replace(".", "_");
+        return path.join("./downloads", folderName);
     }
 }
 
