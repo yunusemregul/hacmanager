@@ -52,7 +52,7 @@ class HACClient {
         const csrfResponse = await this.instance({
             method: "GET",
             url: url,
-            timeout: 3000
+            timeout: 10000
         });
         const dom = parser.parseFromString(csrfResponse.data);
         this.csrfToken = dom.getElementsByName("_csrf")[0].getAttribute("content");
